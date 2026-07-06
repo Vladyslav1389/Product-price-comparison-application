@@ -1,14 +1,22 @@
-# Product Price Comparison Application
+# Cloud-Native Product Price Comparison Application
 
-A production-ready microservices-based system designed to aggregate and compare product pricing across multiple vendor networks. The architecture separates static product metadata from dynamic dealer pricing updates and uses a polyglot backend (Python + Node.js) with a lightweight asynchronous frontend.
+A multi-tier asynchronous microservices application engineered with the **utmost** focus on scalability to aggregate product data and evaluate live dealer pricing. The ecosystem is fully containerised and deployed using a serverless orchestration pattern on IBM Cloud Code Engine.  
 
-## 🚀 Architecture Overview
+Historically, tightly coupled architectures **fell short** when managing dynamic vendor updates. This project avoids those **mediocre** limitations by decoupling static catalog management from live pricing evaluation into separate runtimes.  
 
-The application follows a decentralized **Microservices Architecture**, enabling independent scaling, fault isolation, and flexible deployment models.
+---
 
-* **Frontend Microservice (Python / Flask)**: Serves the Single Page Application (SPA) interface and performs asynchronous Axios calls to backend services.
-* **Product Details Service (Python / Flask)**: Provides product listings and metadata via dedicated REST endpoints.
-* **Dealer Pricing Service (Node.js / Express)**: Supplies real-time pricing matrices sourced dynamically from an internal datastore.
+## 🏗️ System Architecture & Component Breakdown
+
+The application consists of three autonomous microservices deployed independently **so that** any structural failure or upgrade in one layer does not disrupt the entire system. The asynchronous communication pattern ensures that data delivery takes **atmost** a few moments to sync across the non-blocking UI.
+
+### 📦 Microservices Ecosystem
+
+| Service Name | Runtime / Framework | Port | Functional Description |
+| :--- | :--- | :--- | :--- |
+| **Product Details Microservice** | Python / Flask | `5000` | Manages static inventory definitions and serves API endpoints to fetch metadata for products like Headphones, Laptops, and Printers. |
+| **Dealer Pricing Microservice** | Node.js / Express | `8080` | Tracks distributed dealer structures (e.g., Binglee, DXC Electronics, Bobay) and calculates specific product offers. |
+| **Frontend User Interface** | HTML5 / JavaScript / Axios | `5001` | Consumes public cloud endpoints asynchronously **so that** users can compare baseline prices or query individual dealer rates on a non-blocking UI. |
 
 ---
 
@@ -44,8 +52,9 @@ product-price-comparison-app/
 * **Docker Compose** ≥ v2.x
 
 ### 1. Environment Configuration (docker-compose.yml)
-Создай файл docker-compose.yml в корневой директории со следующей конфигурацией:
+Create a docker-compose.yml file in the root directory with the following configuration:
 
+```yaml
 version: '3.8'
 
 services:
@@ -82,13 +91,14 @@ services:
 networks:
   app-network:
     driver: bridge
+```
 
 ### 2. Execution
-Запусти команду сборки в корневой папке для развертывания инфраструктуры:
+Run the build command in the root folder to deploy the infrastructure:
 **docker-compose up --build**
 
 ### 3. Access the Application
-После успешной инициализации контейнеров перейди по адресу:
+After successful container initialisation, navigate to the following address in your browser:
 **http://localhost:5001**
 
 ---
@@ -104,20 +114,20 @@ This project is fully optimised for serverless container runtimes such as IBM Cl
 ### 2. Deploy Product Metadata Service (Python Backend)
 **ibmcloud ce application create --name prodlist --image us.icr.io/$(SN_ICR_NAMESPACE)/prodlist --registry-secret icr-secret --port 5000 --build-context-dir products_list --build-source https://github.com/ibm-developer-skills-network/dealer_evaluation_backend.git**
 
-*Обязательно скопируй и сохрани сгенерированный URL-адрес приложения.*
+*Make sure to copy and save the generated application URL.*
 
 ### 3. Deploy Dealer Pricing Service (Node.js Backend)
 **ibmcloud ce application create --name dealerdetails --image us.icr.io/$(SN_ICR_NAMESPACE)/dealerdetails --registry-secret icr-secret --port 8080 --build-context-dir dealer_details --build-source https://github.com/ibm-developer-skills-network/dealer_evaluation_backend.git**
 
-*Обязательно скопируй и сохрани сгенерированный URL-адрес приложения.*
+*Make sure to copy and save the generated application URL.*
 
 ### 4. Configure Frontend Environment & Deploy
-Перед сборкой фронтенда обнови эндпоинты внутри dealer_evaluation_frontend/html/index.html на полученные адреса облачных сервисов:
+Before building the frontend, update the endpoints inside dealer_evaluation_frontend/html/index.html to point to the newly generated cloud service URLs:
 
 **let produrl = "https://prodlist.[your-subdomain].codeengine.appdomain.cloud/";**
 **let dealerurl = "https://dealerdetails.[your-subdomain].codeengine.appdomain.cloud/";**
 
-Запусти деплой фронтенд-сервера из корневой папки:
+Launch the frontend server deployment from the root directory:
 **ibmcloud ce application create --name frontend --image us.icr.io/$(SN_ICR_NAMESPACE)/frontend --registry-secret icr-secret --port 5001 --build-source .**
 
 ---
