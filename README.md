@@ -80,8 +80,8 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - PROD_LIST_URL=http://localhost:5000/
-      - DEALER_DETAILS_URL=http://localhost:8080/
+      - PROD_LIST_URL=http://localhost:5000
+      - DEALER_DETAILS_URL=http://localhost:8080
     networks:
       - app-network
     depends_on:
@@ -128,7 +128,7 @@ Before building the frontend, update the endpoints inside dealer_evaluation_fron
 **let dealerurl = "https://dealerdetails.[your-subdomain].codeengine.appdomain.cloud/";**
 
 Launch the frontend server deployment from the root directory:
-**ibmcloud ce application create --name frontend --image us.icr.io/$(SN_ICR_NAMESPACE)/frontend --registry-secret icr-secret --port 5001 --build-source .**
+**ibmcloud ce application create --name frontend --image us.icr.io/$(SN_ICR_NAMESPACE)/frontend --registry-secret icr-secret --port 5001 --build-source https://github.com/Vladyslav1389/Product-price-comparison-application.git --build-context-dir dealer_evaluation_frontend**
 
 ---
 
