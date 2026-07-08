@@ -112,12 +112,12 @@ This project is fully optimised for serverless container runtimes such as IBM Cl
 **ibmcloud ce project select --name your-project-name**
 
 ### 2. Deploy Product Metadata Service (Python Backend)
-**ibmcloud ce application create --name prodlist --image us.icr.io/$(SN_ICR_NAMESPACE)/prodlist --registry-secret icr-secret --port 5000 --build-context-dir products_list --build-source https://github.com/ibm-developer-skills-network/dealer_evaluation_backend.git**
+**ibmcloud ce application create --name prodlist --image us.icr.io/$(SN_ICR_NAMESPACE)/prodlist --registry-secret icr-secret --port 5000 --build-context-dir dealer_evaluation_backend/products_list --build-source https://github.com/Vladyslav1389/Product-price-comparison-application.git**
 
 *Make sure to copy and save the generated application URL.*
 
 ### 3. Deploy Dealer Pricing Service (Node.js Backend)
-**ibmcloud ce application create --name dealerdetails --image us.icr.io/$(SN_ICR_NAMESPACE)/dealerdetails --registry-secret icr-secret --port 8080 --build-context-dir dealer_details --build-source https://github.com/ibm-developer-skills-network/dealer_evaluation_backend.git**
+**ibmcloud ce application create --name dealerdetails --image us.icr.io/$(SN_ICR_NAMESPACE)/dealerdetails --registry-secret icr-secret --port 8080 --build-context-dir dealer_evaluation_backend/dealer_details --build-source https://github.com/Vladyslav1389/Product-price-comparison-application.git**
 
 *Make sure to copy and save the generated application URL.*
 
