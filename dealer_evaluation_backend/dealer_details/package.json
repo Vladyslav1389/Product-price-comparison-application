@@ -1,19 +1,19 @@
 {
-  "name": "get-started-node",
+  "name": "dealer-details",
   "main": "server.js",
-  "description": "An introduction to developing Node.js apps on the IBM Cloud platform",
+  "description": "Dealer pricing API (Express) for the product price comparison app",
   "version": "0.1.1",
-  "private": false,
+  "private": true,
   "engines": {
-    "node": "16.13.0",
-    "npm": "9.2.0"
+    "node": ">=18"
   },
   "scripts": {
     "start": "node server.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/IBM-Cloud/get-started-node"
+    "url": "https://github.com/Vladyslav1389/Product-price-comparison-application.git",
+    "directory": "dealer_evaluation_backend/dealer_details"
   },
   "dependencies": {
     "body-parser": "^1.17.x",
@@ -21,6 +21,12 @@
     "express": "^4.15.x",
     "nodemon": "^2.0.6"
   },
-  "author": "IBM Corp",
+  "author": "Vladyslav1389",
+  "contributors": [
+    {
+      "name": "IBM Corp",
+      "url": "https://github.com/IBM-Cloud/get-started-node"
+    }
+  ],
   "license": "Apache-2.0"
 }
