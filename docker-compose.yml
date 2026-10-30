@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  products-backend:
+    build:
+      context: ./dealer_evaluation_backend/products_list
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+
+  dealers-backend:
+    build:
+      context: ./dealer_evaluation_backend/dealer_details
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./dealer_evaluation_frontend
+    ports:
+      - "5001:5001"
+    environment:
+      - PROD_LIST_URL=http://localhost:5000
+      - DEALER_DETAILS_URL=http://localhost:8080
+    networks:
+      - app-network
+    depends_on:
+      - products-backend
+      - dealers-backend
+
+networks:
+  app-network:
+    driver: bridge
