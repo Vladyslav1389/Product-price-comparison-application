@@ -1,14 +1,17 @@
 from flask import Flask
 from flask_cors import CORS
 import json
+from pathlib import Path
 
 app = Flask("List of products")
 CORS(app)
 
+PRODUCTS_FILE = Path(__file__).with_name("products.json")
+
 @app.route("/products")
 def getProductsList():
   products = []
-  with open("products.json", "r") as prodfile:
+  with open(PRODUCTS_FILE, "r") as prodfile:
     data = json.load(prodfile)
     for product in data["products"]:
       products.append(product["product"])
@@ -18,7 +21,7 @@ def getProductsList():
 def getDealers(product):
   products = []
   ret = False
-  with open("products.json", "r") as prodfile:
+  with open(PRODUCTS_FILE, "r") as prodfile:
     data = json.load(prodfile)
     for productMeta in data["products"]:
       if productMeta["product"] == product:
