@@ -5,6 +5,9 @@ app.use(cors());
 
 const dealerslist = require("./utils/dealers.json");
 
+// Own keys only: plain `obj[key]` would also find "constructor", "toString", ...
+const has = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+
 
 
 app.get("/price/:dealer/:product", function (request, response) {
@@ -14,7 +17,7 @@ app.get("/price/:dealer/:product", function (request, response) {
   let resp = false;
   dealers.forEach((dealer) => {
     if(dealer.Dealer === req_dealer) {
-      if(dealer.products[req_product]) {
+      if(has(dealer.products, req_product)) {
         response.send({"message":req_product+" costs "+ dealer.products[req_product]+ " at "+req_dealer});
         resp = true;
       } else {
@@ -34,7 +37,7 @@ app.get("/allprice/:product", function (request, response) {
   let req_product = request.params.product;
   let priceslist = [];
   dealers.forEach((dealer) => {
-    if(dealer.products[req_product]) {
+    if(has(dealer.products, req_product)) {
       priceslist.push({key:dealer.Dealer,value:dealer.products[req_product]});
     }
   });
