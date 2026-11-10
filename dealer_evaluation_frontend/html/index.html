@@ -1,102 +1,137 @@
-<html>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product price comparison</title>
   <style>
-    td:nth-child(even), th:nth-child(even) {
-  background-color: #D6EEEE;
-}
+    body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 40rem; }
+    h1 { font-size: 1.6rem; }
+    .field { margin: 1.25rem 0; }
+    label { display: block; margin-bottom: .25rem; font-weight: 600; }
+    select { font-size: 1rem; padding: .25rem; }
+    #pricing { font-size: large; }
+    table { border-collapse: collapse; }
+    td { padding: .35rem .9rem; border-bottom: 1px solid #ddd; }
+    td:nth-child(even) { background-color: #D6EEEE; }
+    #status { color: #b00020; min-height: 1.5em; }
   </style>
+</head>
+<body>
+  <h1>Products price comparison</h1>
+  <div id="status" role="alert"></div>
+  <div class="field" id="prod_dd"></div>
+  <div class="field" id="dealers"></div>
+  <div class="field" id="pricing" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
   <script>
-    let produrl = "http://localhost:5000/"
-    let dealerurl = "http://localhost:8080/"
+    // Written into the page by dealer_evaluation_frontend/app.py (PROD_LIST_URL / DEALER_DETAILS_URL).
+    // Both end with "/" and are called by the browser, so they must be reachable from the user's machine.
+    const produrl = {{ prod_url|tojson }};
+    const dealerurl = {{ dealer_url|tojson }};
 
-    axios.get(produrl+"products").then(res=>{
-      let selEl = document.createElement("select");
-      selEl.setAttribute("id","selProd")
-      selEl.setAttribute("onChange","getDealers()")
-      let defaultOpt = document.createElement("option");
-      defaultOpt.setAttribute('value',"--SELECT--");
-      defaultOpt.innerText = "--SELECT--";
-      selEl.appendChild(defaultOpt);
+    const PLACEHOLDER = "--SELECT--";
+    const ALL_DEALERS = "All Dealers";
 
-      res.data.products.forEach(element => {
-        let optEl = document.createElement("option");
-        optEl.setAttribute('value',element);
-        optEl.innerText = element;
-        selEl.appendChild(optEl);
-      })
-      let prod = document.getElementById('prod_dd');
-      prod.childNodes.forEach(node=>prod.removeChild(node));
-      prod.appendChild(selEl);
-    });
+    const byId = (id) => document.getElementById(id);
+    const seg = encodeURIComponent; // product and dealer names go into URL paths
 
-    let getDealers = ()=>{
-      let valToFetch = document.getElementById("selProd").value;
-
-      if(valToFetch != "--SELECT--") {
-        axios.get(produrl+"getdealers/"+valToFetch).then(res=>{
-        let selEl = document.createElement("select");
-        selEl.setAttribute("id","selDealer")
-        selEl.setAttribute("onChange","getDealerProductPrice()")
-        let defaultOpt = document.createElement("option");
-        defaultOpt.setAttribute('value',"--SELECT--");
-        defaultOpt.innerText = "--SELECT--";
-        selEl.appendChild(defaultOpt);
-        res.data.dealers.forEach((element)=>{
-          let optEl = document.createElement("option");
-          optEl.setAttribute('value',element);
-          optEl.innerText = element;
-          selEl.appendChild(optEl);
-        })
-        let optEl = document.createElement("option");
-        optEl.setAttribute('value','All Dealers');
-        optEl.innerText = 'All Dealers';
-        selEl.appendChild(optEl);
-
-        let dealers = document.getElementById('dealers');
-        dealers.childNodes.forEach(node=>dealers.removeChild(node));
-        dealers.appendChild(selEl);
-        })
+    function setStatus(message) {
+      byId("status").textContent = message || "";
     }
-  }
-  
-    let getDealerProductPrice = ()=>{
-      let prodvalToFetch = document.getElementById("selProd").value;
-      let dealervalToFetch = document.getElementById("selDealer").value;
 
-      let pricingEl = document.getElementById("pricing");
-      pricingEl.childNodes.forEach(node=>pricingEl.removeChild(node));
+    function reportError(what, err) {
+      console.error("Failed to " + what, err);
+      setStatus("Could not " + what + ". Check that the services are running and try again.");
+    }
 
-      if (dealervalToFetch != 'All Dealers') {
-        axios.get(dealerurl+"price/"+dealervalToFetch+"/"+prodvalToFetch).then(res=>{
-          document.getElementById("pricing").innerText = res.data.message;
-        })
-      } else {
-        axios.get(dealerurl+"allprice/"+prodvalToFetch).then(res=>{
-          let table = document.createElement("table")
+    // replaceChildren() clears the container first, so nothing stale stays on screen.
+    function render(containerId, ...nodes) {
+      byId(containerId).replaceChildren(...nodes);
+    }
 
-          res.data.prices.forEach((price)=>{
-            let tr = document.createElement("tr")
-            tr.innerHTML = "<td>"+price.key + "</td><td>"+price.value + "</td>";
-            table.appendChild(tr);
-          });
+    function buildSelect(id, labelText, values, onChange) {
+      const label = document.createElement("label");
+      label.htmlFor = id;
+      label.textContent = labelText;
 
-          if(table.hasChildNodes()) {
-            pricingEl.appendChild(table);
-          }
-        })
+      const select = document.createElement("select");
+      select.id = id;
+      for (const value of [PLACEHOLDER, ...values]) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      }
+      select.addEventListener("change", onChange);
+      return [label, select];
+    }
+
+    function buildPriceTable(prices) {
+      const table = document.createElement("table");
+      for (const { key, value } of prices) {
+        const row = table.insertRow();
+        row.insertCell().textContent = key;
+        row.insertCell().textContent = value;
+      }
+      return table;
+    }
+
+    async function loadProducts() {
+      try {
+        const res = await axios.get(produrl + "products");
+        render("prod_dd", ...buildSelect("selProd", "Product", res.data.products, onProductChange));
+      } catch (err) {
+        reportError("load the product list", err);
       }
     }
-    
 
-</script>
-<h1>
-    Products price comparison
-    <div style='margin:6mm' id='prod_dd'></div>
-    <div style='margin:6mm' id='dealers'></div>
-    <div style='margin:6mm;font-size: large;' id='pricing'></div>
+    async function onProductChange() {
+      const product = byId("selProd").value;
+      setStatus("");
+      render("dealers");
+      render("pricing");
+      if (product === PLACEHOLDER) return;
 
-</h1>
+      try {
+        const res = await axios.get(produrl + "getdealers/" + seg(product));
+        if (byId("selProd").value !== product) return; // the user already picked something else
+        if (!res.data.dealers) {
+          setStatus(res.data.message || "No dealers found for this product.");
+          return;
+        }
+        render("dealers", ...buildSelect("selDealer", "Dealer", [...res.data.dealers, ALL_DEALERS], onDealerChange));
+      } catch (err) {
+        reportError("load the dealers", err);
+      }
+    }
 
+    async function onDealerChange() {
+      const product = byId("selProd").value;
+      const dealer = byId("selDealer").value;
+      setStatus("");
+      render("pricing");
+      if (dealer === PLACEHOLDER) return;
 
+      const url = dealer === ALL_DEALERS
+        ? dealerurl + "allprice/" + seg(product)
+        : dealerurl + "price/" + seg(dealer) + "/" + seg(product);
 
+      try {
+        const res = await axios.get(url);
+        if (byId("selProd").value !== product || byId("selDealer")?.value !== dealer) return;
+        if (res.data.prices) {
+          render("pricing", buildPriceTable(res.data.prices));
+        } else {
+          render("pricing", document.createTextNode(res.data.message || "No price available."));
+        }
+      } catch (err) {
+        reportError("load the price", err);
+      }
+    }
+
+    loadProducts();
+  </script>
+</body>
 </html>
